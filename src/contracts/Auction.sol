@@ -6,7 +6,6 @@ import "../interfaces/IAuction.sol";
 contract Auction is IAuction {
     /// State variables
 
-    bool public paused = true;
     address public admin;
     mapping(address => uint256) public bids;
     /// This would be inefficient to have on L1. But to avoid depending on
