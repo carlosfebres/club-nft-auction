@@ -2,12 +2,13 @@
 pragma solidity =0.8.11;
 
 interface IAuction {
-    error NotAdmin();
-    error AuctionNotActive();
+    error AlreadyInitialized();
     error AuctionIsActive();
-    error NoEtherSent();
+    error AuctionNotActive();
     error LessThanFloorPrice(uint256 actualSent);
     error LessThanMinIncrement(uint256 actualSent);
+    error NotAdmin();
+    error NoEtherSent();
     error RejectDirectPayments();
     error TransferFailed();
 
@@ -24,6 +25,18 @@ interface IAuction {
     /// @param bidder Address of the bidder that lost the auction
     /// @param refundAmount Amount the bidder is refunded
     event RefundBid(address indexed bidder, uint256 indexed refundAmount);
+
+    /// @notice This function should be ran first thing after deploy.
+    /// It initializes the state of the contract
+    /// @param initFloorPrice Auction floor price
+    /// @param initAuctionEndBlock Auction end block number
+    /// @param initWhitelistedCollection Collection that is whitelisted to
+    /// participate in the auction
+    function initialize(
+        uint256 initFloorPrice,
+        uint256 initAuctionEndBlock,
+        address initWhitelistedCollection
+    ) external;
 
     /// @notice Starts the auction
     function startAuction() external;

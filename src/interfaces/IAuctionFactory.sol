@@ -2,14 +2,19 @@
 pragma solidity =0.8.11;
 
 interface IAuctionFactory {
+    error NotAdmin();
+
     /// @notice Creates minimal proxy contract for auction
     /// @param floorPrice Floor bid price. Bids can't be places that are
     /// lower than this price
     /// @param auctionEndBlock Ethereum block index at which the auction
     /// ends
-    function createAuction(uint256 floorPrice, uint256 auctionEndBlock)
-        external
-        returns (address);
+    /// @param salt Used for deterministic clone deploy
+    function createAuction(
+        uint256 floorPrice,
+        uint256 auctionEndBlock,
+        bytes32 salt
+    ) external returns (address);
 
     /// @notice Creates minimal proxy contract for whitelisted auction.
     /// This is where only holders of a certain NFT collection are
@@ -20,10 +25,12 @@ interface IAuctionFactory {
     /// ends
     /// @param whitelistedCollection Ethereum address of the NFT collection
     /// that is whitelisted to participate in the auction
+    /// @param salt Used for deterministic clone deploy
     function createWhitelistedAuction(
         uint256 floorPrice,
         uint256 auctionEndBlock,
-        address whitelistedCollection
+        address whitelistedCollection,
+        bytes32 salt
     ) external returns (address);
 }
 

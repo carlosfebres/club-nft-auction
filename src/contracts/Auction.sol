@@ -14,26 +14,38 @@ contract Auction is IAuction {
 
     uint256 public constant MINIMUM_BID_INCREMENT = 0.1 ether;
 
-    uint256 public immutable floorPrice;
-    uint256 public immutable auctionEndBlock;
+    uint256 public floorPrice;
+    uint256 public auctionEndBlock;
+    address public whitelistedCollection;
 
     /// @dev true if active
     bool private auctionActive = false;
-
-    /// Constructor
-
-    constructor(uint256 initFloorPrice, uint256 initAuctionEndBlock) {
-        floorPrice = initFloorPrice;
-        auctionEndBlock = initAuctionEndBlock;
-
-        admin = msg.sender;
-    }
+    bool private initialized = false;
 
     /// Modifiers
 
     modifier onlyOwner() {
         if (msg.sender != admin) revert NotAdmin();
         _;
+    }
+
+    /// Init
+
+    /// @inheritdoc IAuction
+    function initialize(
+        uint256 initFloorPrice,
+        uint256 initAuctionEndBlock,
+        address initWhitelistedCollection
+    ) external override {
+        if (initialized) revert AlreadyInitialized();
+
+        floorPrice = initFloorPrice;
+        auctionEndBlock = initAuctionEndBlock;
+        whitelistedCollection = initWhitelistedCollection;
+
+        admin = msg.sender;
+
+        initialized = true;
     }
 
     /// Receiver
@@ -43,7 +55,7 @@ contract Auction is IAuction {
         revert RejectDirectPayments();
     }
 
-    /// Place Bid, Refund Bid, Refund Bidders
+    /// Place Bid, Refund Bidders
 
     /// @inheritdoc IAuction
     function placeBid() external payable override {

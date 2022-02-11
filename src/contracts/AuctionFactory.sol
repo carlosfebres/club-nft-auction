@@ -2,23 +2,63 @@
 pragma solidity =0.8.11;
 
 import "../interfaces/IAuctionFactory.sol";
+import "../interfaces/IAuction.sol";
+import "./libs/Clones.sol";
 
 contract AuctionFactory is IAuctionFactory {
     /// Uses https://blog.openzeppelin.com/deep-dive-into-the-minimal-proxy-contract/ pattern
 
+    address public immutable admin;
+    /// @dev Clones will be made off of this deployment
+    IAuction auctionAddress;
+
+    /// Modifiers
+
+    modifier onlyOwner() {
+        if (msg.sender != admin) revert NotAdmin();
+        _;
+    }
+
+    /// Constructor
+
+    constructor() {
+        admin = msg.sender;
+    }
+
     /// @inheritdoc IAuctionFactory
-    function createAuction(uint256 floorPrice, uint256 auctionEndBlock)
-        external
-        override
-        returns (address)
-    {}
+    function createAuction(
+        uint256 floorPrice,
+        uint256 auctionEndBlock,
+        bytes32 salt
+    ) external override onlyOwner returns (address) {
+        address copy = Clones.cloneDeterministic(address(auctionAddress), salt);
+        IAuction auctionCopy = IAuction(copy);
+        auctionCopy.initialize(floorPrice, auctionEndBlock, address(0));
+        return copy;
+    }
 
     /// @inheritdoc IAuctionFactory
     function createWhitelistedAuction(
         uint256 floorPrice,
         uint256 auctionEndBlock,
-        address whitelistedCollection
-    ) external override returns (address) {}
+        address whitelistedCollection,
+        bytes32 salt
+    ) external override onlyOwner returns (address) {
+        address copy = Clones.cloneDeterministic(address(auctionAddress), salt);
+        IAuction auctionCopy = IAuction(copy);
+        auctionCopy.initialize(
+            floorPrice,
+            auctionEndBlock,
+            whitelistedCollection
+        );
+        return copy;
+    }
+
+    /// Admin
+
+    function setAuctionAddress(address initAuctionAddress) external onlyOwner {
+        auctionAddress = IAuction(initAuctionAddress);
+    }
 }
 
 /*
