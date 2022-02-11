@@ -78,7 +78,7 @@ contract Auction is IAuction {
         uint256 losingThreshold,
         uint256 fromIx,
         uint256 toIx
-    ) external onlyOwner {
+    ) external override onlyOwner {
         if (auctionActive) revert AuctionIsActive();
 
         uint256 refundAmount;
@@ -95,7 +95,7 @@ contract Auction is IAuction {
         }
     }
 
-    function startAuction() external onlyOwner {
+    function startAuction() external override onlyOwner {
         auctionActive = true;
         emit StartAuction();
     }
