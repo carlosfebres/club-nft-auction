@@ -6,7 +6,8 @@ import "../interfaces/IAuction.sol";
 contract Auction is IAuction {
     /// State variables
 
-    address public admin;
+    // todo: change for the deployer
+    address private constant ADMIN = 0x000000724350d0b24747bd816dC5031AcB7EFE0B;
     mapping(address => uint256) public bids;
     /// This would be inefficient to have on L1. But to avoid depending on
     /// the indexer, this saves a lot of time on L2
@@ -25,7 +26,7 @@ contract Auction is IAuction {
     /// Modifiers
 
     modifier onlyOwner() {
-        if (msg.sender != admin) revert NotAdmin();
+        if (msg.sender != ADMIN) revert NotAdmin();
         _;
     }
 
@@ -37,13 +38,12 @@ contract Auction is IAuction {
         uint256 initAuctionEndBlock,
         address initWhitelistedCollection
     ) external override {
+        if (tx.origin != ADMIN) revert NotCloner();
         if (initialized) revert AlreadyInitialized();
 
         floorPrice = initFloorPrice;
         auctionEndBlock = initAuctionEndBlock;
         whitelistedCollection = initWhitelistedCollection;
-
-        admin = msg.sender;
 
         initialized = true;
     }
@@ -83,6 +83,11 @@ contract Auction is IAuction {
         if (block.number >= auctionEndBlock) endAuction();
     }
 
+    function endAuction() internal {
+        auctionActive = false;
+        emit EndAuction();
+    }
+
     /// Admin
 
     /// @inheritdoc IAuction
@@ -112,13 +117,8 @@ contract Auction is IAuction {
         emit StartAuction();
     }
 
-    function endAuction() internal {
-        auctionActive = false;
-        emit EndAuction();
-    }
-
     function withdrawSaleProceeds() external onlyOwner {
-        (bool success, ) = payable(admin).call{value: address(this).balance}(
+        (bool success, ) = payable(ADMIN).call{value: address(this).balance}(
             ""
         );
         if (!success) revert TransferFailed();

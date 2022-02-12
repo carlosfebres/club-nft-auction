@@ -44,7 +44,7 @@ library Clones {
         address implementation,
         bytes32 salt,
         address deployer
-    ) internal pure returns (address predicted) {
+    ) external pure returns (address predicted) {
         assembly {
             let ptr := mload(0x40)
             mstore(
@@ -61,14 +61,5 @@ library Clones {
             mstore(add(ptr, 0x6c), keccak256(ptr, 0x37))
             predicted := keccak256(add(ptr, 0x37), 0x55)
         }
-    }
-
-    /// @dev Computes the address of a clone deployed using {Clones-cloneDeterministic}.
-    function predictDeterministicAddress(address implementation, bytes32 salt)
-        internal
-        view
-        returns (address predicted)
-    {
-        return predictDeterministicAddress(implementation, salt, address(this));
     }
 }
