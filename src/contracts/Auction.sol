@@ -101,11 +101,15 @@ contract Auction is IAuction {
         if (auctionActive) revert AuctionIsActive();
 
         uint256 refundAmount;
+        address payable bidder;
 
         for (uint256 i = fromIx; i <= toIx; i++) {
-            address payable bidder = bidders[i];
+            bidder = bidders[i];
 
             if (bids[bidder] < losingThreshold) refundAmount = bids[bidder];
+
+            delete bids[bidder];
+            bidders[i] = payable(address(0));
 
             (bool success, ) = bidder.call{value: refundAmount}("");
             if (!success) revert TransferFailed();
