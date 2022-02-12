@@ -61,17 +61,19 @@ contract Auction is IAuction {
     function placeBid() external payable override {
         if (!auctionActive) revert AuctionNotActive();
         if (msg.value <= 0) revert NoEtherSent();
-        if (msg.value < floorPrice)
-            revert LessThanFloorPrice({actualSent: msg.value});
         /// Ensures that if the bidder has an existing bid, the delta that
         /// he sent, is at least MINIMUM_BID_INCREMENT
         if (bids[msg.sender] > 0) {
-            if (msg.value > MINIMUM_BID_INCREMENT) {
+            if (msg.value < MINIMUM_BID_INCREMENT) {
                 revert LessThanMinIncrement({actualSent: msg.value});
             }
             /// Do not need to add the bidder to bidders, since the bidder
             /// is already there
         } else {
+            /// If this is the first bid, then make sure it's higher than
+            /// the floor price
+            if (msg.value < floorPrice)
+                revert LessThanFloorPrice({actualSent: msg.value});
             /// Would be expensive on L1
             bidders.push(payable(msg.sender));
         }
