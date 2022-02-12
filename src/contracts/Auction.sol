@@ -38,7 +38,7 @@ contract Auction is IAuction {
         uint256 initAuctionEndBlock,
         address initWhitelistedCollection
     ) external override {
-        if (tx.origin != ADMIN) revert NotCloner();
+        if (tx.origin != ADMIN) revert NotAdmin();
         if (initialized) revert AlreadyInitialized();
 
         floorPrice = initFloorPrice;

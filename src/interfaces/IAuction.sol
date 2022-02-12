@@ -8,7 +8,6 @@ interface IAuction {
     error LessThanFloorPrice(uint256 actualSent);
     error LessThanMinIncrement(uint256 actualSent);
     error NotAdmin();
-    error NotCloner();
     error NoEtherSent();
     error RejectDirectPayments();
     error TransferFailed();
