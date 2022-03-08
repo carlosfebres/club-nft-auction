@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity =0.8.11;
+pragma solidity =0.8.12;
 
 import "../interfaces/IAuction.sol";
 
@@ -9,9 +9,6 @@ contract Auction is IAuction {
     // todo: change for the deployer
     address private constant ADMIN = 0x000000724350d0b24747bd816dC5031AcB7EFE0B;
     mapping(address => uint256) public bids;
-    /// This would be inefficient to have on L1. But to avoid depending on
-    /// the indexer, this saves a lot of time on L2
-    address payable[] bidders;
 
     uint256 public constant MINIMUM_BID_INCREMENT = 0.1 ether;
 
@@ -19,7 +16,6 @@ contract Auction is IAuction {
     uint256 public auctionEndBlock;
     address public whitelistedCollection;
 
-    /// @dev true if active
     bool private auctionActive = false;
     bool private initialized = false;
 
@@ -61,21 +57,18 @@ contract Auction is IAuction {
     function placeBid() external payable override {
         if (!auctionActive) revert AuctionNotActive();
         if (msg.value <= 0) revert NoEtherSent();
+
         /// Ensures that if the bidder has an existing bid, the delta that
         /// he sent, is at least MINIMUM_BID_INCREMENT
         if (bids[msg.sender] > 0) {
             if (msg.value < MINIMUM_BID_INCREMENT) {
                 revert LessThanMinIncrement({actualSent: msg.value});
             }
-            /// Do not need to add the bidder to bidders, since the bidder
-            /// is already there
         } else {
             /// If this is the first bid, then make sure it's higher than
             /// the floor price
             if (msg.value < floorPrice)
                 revert LessThanFloorPrice({actualSent: msg.value});
-            /// Would be expensive on L1
-            bidders.push(payable(msg.sender));
         }
 
         bids[msg.sender] += msg.value;
@@ -91,32 +84,6 @@ contract Auction is IAuction {
     }
 
     /// Admin
-
-    /// @inheritdoc IAuction
-    function refundBidders(
-        uint256 losingThreshold,
-        uint256 fromIx,
-        uint256 toIx
-    ) external override onlyOwner {
-        if (auctionActive) revert AuctionIsActive();
-
-        uint256 refundAmount;
-        address payable bidder;
-
-        for (uint256 i = fromIx; i <= toIx; i++) {
-            bidder = bidders[i];
-
-            if (bids[bidder] < losingThreshold) refundAmount = bids[bidder];
-
-            delete bids[bidder];
-            bidders[i] = payable(address(0));
-
-            (bool success, ) = bidder.call{value: refundAmount}("");
-            if (!success) revert TransferFailed();
-
-            emit RefundBid({bidder: bidder, refundAmount: refundAmount});
-        }
-    }
 
     function startAuction() external override onlyOwner {
         auctionActive = true;

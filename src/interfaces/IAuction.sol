@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity =0.8.11;
+pragma solidity =0.8.12;
 
 interface IAuction {
     error AlreadyInitialized();
@@ -21,10 +21,6 @@ interface IAuction {
     /// @param bidder Address of the bidder
     /// @param price Amount the bidder has bid
     event PlaceBid(address indexed bidder, uint256 indexed price);
-    /// @notice Emitted when lost bid was refunded
-    /// @param bidder Address of the bidder that lost the auction
-    /// @param refundAmount Amount the bidder is refunded
-    event RefundBid(address indexed bidder, uint256 indexed refundAmount);
 
     /// @notice This function should be ran first thing after deploy.
     /// It initializes the state of the contract
@@ -46,16 +42,7 @@ interface IAuction {
     /// their original bid
     function placeBid() external payable;
 
-    /// @notice Refunds all the lost bids. Makes an assumption that
-    /// the contract keeps track of all of the bids.
-    /// @param losingThreshold Refund all the bids below this price
-    /// @param fromIx Loop through all of the bidders starting at this index
-    /// @param toIx Loop through all of the bidders ending at this index
-    function refundBidders(
-        uint256 losingThreshold,
-        uint256 fromIx,
-        uint256 toIx
-    ) external;
+    /// Bidder refunds happen off-chain
 }
 
 /*

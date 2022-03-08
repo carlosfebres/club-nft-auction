@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (proxy/Clones.sol)
-pragma solidity =0.8.11;
+pragma solidity =0.8.12;
 
 /// @dev https://eips.ethereum.org/EIPS/eip-1167[EIP 1167] is a standard for
 /// deploying minimal proxy contracts, also known as "clones".
