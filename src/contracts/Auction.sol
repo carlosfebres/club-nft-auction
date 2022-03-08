@@ -6,14 +6,14 @@ import "../interfaces/IAuction.sol";
 contract Auction is IAuction {
     /// State variables
 
-    // todo: change for the deployer
+    // todo: this must be deployer
     address private constant ADMIN = 0x000000724350d0b24747bd816dC5031AcB7EFE0B;
     mapping(address => uint256) public bids;
 
     uint256 public constant MINIMUM_BID_INCREMENT = 0.1 ether;
 
     uint256 public floorPrice;
-    uint256 public auctionEndBlock;
+    uint256 public auctionEndTimestamp;
     address public whitelistedCollection;
 
     bool private auctionActive = false;
@@ -31,14 +31,14 @@ contract Auction is IAuction {
     /// @inheritdoc IAuction
     function initialize(
         uint256 initFloorPrice,
-        uint256 initAuctionEndBlock,
+        uint256 initAuctionEndTimestamp,
         address initWhitelistedCollection
     ) external override {
         if (tx.origin != ADMIN) revert NotAdmin();
         if (initialized) revert AlreadyInitialized();
 
         floorPrice = initFloorPrice;
-        auctionEndBlock = initAuctionEndBlock;
+        auctionEndTimestamp = initAuctionEndTimestamp;
         whitelistedCollection = initWhitelistedCollection;
 
         initialized = true;
@@ -75,7 +75,7 @@ contract Auction is IAuction {
 
         emit PlaceBid({bidder: msg.sender, price: msg.value});
 
-        if (block.number >= auctionEndBlock) endAuction();
+        if (block.timestamp >= auctionEndTimestamp) endAuction();
     }
 
     function endAuction() internal {
