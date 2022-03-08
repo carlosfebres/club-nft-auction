@@ -90,7 +90,7 @@ contract Auction is IAuction {
         emit StartAuction();
     }
 
-    function withdrawSaleProceeds() external onlyOwner {
+    function withdraw() external onlyOwner {
         (bool success, ) = payable(ADMIN).call{value: address(this).balance}(
             ""
         );
