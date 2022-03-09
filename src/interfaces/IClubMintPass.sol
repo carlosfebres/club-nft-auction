@@ -6,8 +6,19 @@ import "../interfaces/INFTContract.sol";
 
 interface IClubMintPass {
 
-    // todo: should be burnable so that it can
-    // todo: be used to track who will mint the clubs
+
+    /// @notice Utility function to conveniently send all the club
+    /// nfts to the winners of the auction.
+    /// @param to addresses of winners. Each of these receives one
+    /// mint pass nft.
+    function batchTransfer(address[] calldata to) external;
+
+    /// @notice Each owner of the NFT is able to call this function.
+    /// It will destroy their mint pass and will write into storage
+    /// of the contract the address of the burner. This will then be
+    /// used as a whitelist address that will mint the actual club
+    /// NFT.
+    function burnMintPass() external;
 
 }
 
