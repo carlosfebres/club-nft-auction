@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.12;
 
+import "../interfaces/INFTContract.sol";
 import "../interfaces/IAuctionFactory.sol";
 import "../interfaces/IAuction.sol";
 import "./libs/Clones.sol";
@@ -33,7 +34,7 @@ contract AuctionFactory is IAuctionFactory {
     ) external override onlyOwner returns (address) {
         address copy = Clones.cloneDeterministic(address(auctionAddress), salt);
         IAuction auctionCopy = IAuction(copy);
-        auctionCopy.initialize(floorPrice, auctionEndBlock, address(0));
+        auctionCopy.initialize(floorPrice, auctionEndBlock, INFTContract(address(0)));
         return copy;
     }
 
@@ -49,7 +50,7 @@ contract AuctionFactory is IAuctionFactory {
         auctionCopy.initialize(
             floorPrice,
             auctionEndBlock,
-            whitelistedCollection
+            INFTContract(whitelistedCollection)
         );
         return copy;
     }
