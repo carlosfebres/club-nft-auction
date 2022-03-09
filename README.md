@@ -9,3 +9,4 @@ Mainnet contract for Club NFT Auction
 - placholder nft mint pass
 - test the contracts with FE on testnet
 - simple tests
+- script to distribute ClubMintPasses to winners
