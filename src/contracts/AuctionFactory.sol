@@ -56,6 +56,9 @@ contract AuctionFactory is IAuctionFactory {
 
     /// Admin
 
+    /// @notice If there is ever a need, new club auctions can be cloned
+    /// by setting this to a different address.
+    /// @param initAuctionAddress make clones off this contract
     function setAuctionAddress(address initAuctionAddress) external onlyOwner {
         auctionAddress = IAuction(initAuctionAddress);
     }

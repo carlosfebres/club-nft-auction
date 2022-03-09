@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.12;
 
+import "../interfaces/INFTContract.sol";
+
+
 interface IAuction {
     error AlreadyInitialized();
     error AuctionIsActive();
     error AuctionNotActive();
+    error BidForbidden();
     error LessThanFloorPrice(uint256 actualSent);
     error LessThanMinIncrement(uint256 actualSent);
     error NotAdmin();
@@ -31,7 +35,7 @@ interface IAuction {
     function initialize(
         uint256 initFloorPrice,
         uint256 initAuctionEndBlock,
-        address initWhitelistedCollection
+        INFTContract initWhitelistedCollection
     ) external;
 
     /// @notice Starts the auction
@@ -40,7 +44,12 @@ interface IAuction {
     /// @notice Places the bid. Handles modifying the bid as well.
     /// If the same bidder calls this function again, then that alters
     /// their original bid
-    function placeBid() external payable;
+    /// @param tokenID this is only used if whitelistedCollection is set
+    /// to a valid nft contract address. This tokenID indicates what
+    /// token from the collection the bidder owns. In the case, where
+    /// whitelistedCollection is not set, anyone can bid, so any value
+    /// can be passed for tokenID
+    function placeBid(uint256 tokenID) external payable;
 
     /// Bidder refunds happen off-chain
 }

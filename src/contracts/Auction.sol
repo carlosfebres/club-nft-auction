@@ -2,8 +2,13 @@
 pragma solidity =0.8.12;
 
 import "../interfaces/IAuction.sol";
+import "../interfaces/INFTContract.sol";
+import "./libs/NFTCommon.sol";
+
 
 contract Auction is IAuction {
+    using NFTCommon for INFTContract;
+
     /// State variables
 
     // todo: this must be deployer
@@ -14,7 +19,7 @@ contract Auction is IAuction {
 
     uint256 public floorPrice;
     uint256 public auctionEndTimestamp;
-    address public whitelistedCollection;
+    INFTContract public whitelistedCollection;
 
     bool private auctionActive = false;
     bool private initialized = false;
@@ -32,7 +37,7 @@ contract Auction is IAuction {
     function initialize(
         uint256 initFloorPrice,
         uint256 initAuctionEndTimestamp,
-        address initWhitelistedCollection
+        INFTContract initWhitelistedCollection
     ) external override {
         if (tx.origin != ADMIN) revert NotAdmin();
         if (initialized) revert AlreadyInitialized();
@@ -51,12 +56,35 @@ contract Auction is IAuction {
         revert RejectDirectPayments();
     }
 
-    /// Place Bid, Refund Bidders
+    /// Check if Whitelisted, Place Bid
+
+    function checkIfWhitelisted(uint256 tokenID) internal view {
+        // ! be very careful with this
+        // ! only whitelist the collections with trusted code
+        // ! you are giving away control here to the nft contract
+        // ! for balance checking purposes, but the code can be
+        // ! anything
+
+        // if address is zero, any collection can bid
+        if (address(whitelistedCollection) == address(0)) {
+            return;
+        }
+
+        uint256 sendersBalance = whitelistedCollection.quantityOf(
+            address(msg.sender),
+            tokenID
+        );
+
+        if (sendersBalance == 0) {
+            revert BidForbidden();
+        }
+    }
 
     /// @inheritdoc IAuction
-    function placeBid() external payable override {
+    function placeBid(uint256 tokenID) external payable override {
         if (!auctionActive) revert AuctionNotActive();
         if (msg.value <= 0) revert NoEtherSent();
+        checkIfWhitelisted(tokenID);
 
         /// Ensures that if the bidder has an existing bid, the delta that
         /// he sent, is at least MINIMUM_BID_INCREMENT
