@@ -5,6 +5,7 @@ import "../interfaces/INFTContract.sol";
 
 
 interface IAuction {
+
     error AlreadyInitialized();
     error AuctionIsActive();
     error AuctionNotActive();

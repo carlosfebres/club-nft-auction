@@ -1,28 +1,61 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.12;
 
-import "../interfaces/INFTContract.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+
+import "../interfaces/IClubMintPass.sol";
 
 
-interface IClubMintPass {
+contract ClubMintPass is IClubMintPass, ERC721("RKL Club Mint Pass", "RKLCMP") {
 
-    error BurnNotEnabled();
-    error NotAdmin();
-    error NotOwner(uint256);
+    address public immutable admin;
+    address[] public minters;
 
-    /// @notice Utility function to conveniently send all the club
-    /// nfts to the winners of the auction.
-    /// @param to addresses of winners. Each of these receives one
-    /// mint pass nft.
-    function batchMint(address[] calldata to) external;
+    bool private burnEnabled = false;
+    uint256 private tokenId = 1;
 
-    /// @notice Each owner of the NFT is able to call this function.
-    /// It will destroy their mint pass and will write into storage
-    /// of the contract the address of the burner. This will then be
-    /// used as a whitelist address that will mint the actual club
-    /// NFT.
-    /// @param tokenID token ID to burn. Caller must be owner.
-    function burnMintPass(uint256 tokenID) external;
+    /// Modifiers
+
+    modifier onlyOwner() {
+        if (msg.sender != admin) revert NotAdmin();
+        _;
+    }
+
+    /// Constructor
+
+    constructor() {
+        admin = msg.sender;
+    }
+
+    /// @inheritdoc IClubMintPass
+    function batchMint(address[] calldata to) external onlyOwner {
+        for (uint256 i = 0; i < to.length; i++) {
+            _safeMint(to[i], tokenId);
+            tokenId += 1;
+        }
+    }
+
+    /// @inheritdoc IClubMintPass
+    function burnMintPass(uint256 tokenID_) external {
+        // to avoid having people accidentally burn
+        if (burnEnabled == false) {
+            revert BurnNotEnabled();
+        }
+        // burner must be the owner of the tokenID_
+        address owner = ownerOf(tokenID_);
+        if (owner != msg.sender) {
+            revert NotOwner(tokenID_);
+        }
+        // burn the token and add the user to Club minters
+        _burn(tokenId);
+        // add the burner as qualified to mint the actual Club NFT
+        minters.push(msg.sender);
+    }
+
+    /// Admin
+    function flipBurn() external onlyOwner {
+        burnEnabled = !burnEnabled;
+    }
 
 }
 
@@ -36,7 +69,7 @@ interface IClubMintPass {
  * 88     `8b  88     "88,  88
  * 88      `8b 88       Y8b 88888888888
  *
- * IClubMintPass.sol
+ * ClubMintPass.sol
  *
  * MIT License
  * ===========
