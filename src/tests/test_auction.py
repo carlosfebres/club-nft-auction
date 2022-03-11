@@ -1,12 +1,13 @@
 import pytest
-from brownie import Auction, AuctionFactory, accounts
+import time
+from brownie import Auction, AuctionFactory, accounts, chain, Wei
 import brownie
 
-# 1. test can't bid if auction not started
+# ✔️ 1. test can't bid if auction not started
 # ✔️ 2. test correct state of the clones
-# 3. test can't bid after auction ended
-# 4. test can bid during active auction
-# 5. test correct bids for diffs
+# ✔️ 3. test can't bid after auction ended
+# ✔️ 4. test can bid during active auction
+# ✔️ 5. test correct bids for diffs
 # 6. test direct eth payments are rejected
 # ✔️ 7. test auction can't be initialized more than once
 # ✔️ 8. test auction can't be initialized by non-deployer
@@ -18,6 +19,12 @@ import brownie
 
 ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 SENTINEL_TOKEN_ID = 0
+
+# Errors
+
+AuctionNotActive = 'typed error: 0x69b8d0fe'
+AlreadyInitialized = 'typed error: 0x0dc149f0'
+NotAdmin = 'typed error: 0x7bfa4b9f'
 
 # Tests Set Up
 
@@ -56,7 +63,7 @@ def test_cant_bid_before_start(AuctionDeploy, A):
         init_timestamp,
         init_address
     )
-    with brownie.reverts("typed error: 0x69b8d0fe"):
+    with brownie.reverts(AuctionNotActive):
         auction.placeBid(
             SENTINEL_TOKEN_ID,
             {
@@ -100,6 +107,72 @@ def test_correct_clone_state(AuctionDeploy, AuctionFactoryDeploy, A):
     assert auction.auctionEndTimestamp() == init_timestamp
     assert auction.whitelistedCollection() == A.alice
 
+
+# 3., 4.
+def test_cant_bid_after_end(AuctionDeploy, A):
+    auction = AuctionDeploy
+
+    now = int(time.time())
+    init_floor_price, init_timestamp, init_address = 1, now, ZERO_ADDRESS
+    auction.initialize(
+        init_floor_price,
+        init_timestamp,
+        init_address
+    )
+    # txn.timestamp here will be equal to: `now`
+    txn = auction.startAuction()
+    chain.sleep(10)
+    txn = auction.placeBid(
+        SENTINEL_TOKEN_ID,
+        {
+            'from': A.alice,
+            'value': f'{init_floor_price} ether'
+        }
+    )
+    with brownie.reverts(AuctionNotActive):
+        auction.placeBid(
+            SENTINEL_TOKEN_ID,
+            {
+                'from': A.alice,
+                'value': f'{init_floor_price} ether'
+            }
+        )
+
+
+# 5.
+def test_cant_bid_after_end(AuctionDeploy, A):
+    auction = AuctionDeploy
+
+    # auction end somewhere in the future
+    now = int(time.time()) + 1_000_000
+    init_floor_price, init_timestamp, init_address = 1, now, ZERO_ADDRESS
+    auction.initialize(
+        init_floor_price,
+        init_timestamp,
+        init_address
+    )
+    auction.startAuction()
+
+    alice_bid = f'{init_floor_price} ether'
+    auction.placeBid(
+        SENTINEL_TOKEN_ID,
+        {
+            'from': A.alice,
+            'value': Wei(alice_bid)
+        }
+    )
+    assert auction.bids(A.alice) == Wei(alice_bid)
+
+    auction.placeBid(
+        SENTINEL_TOKEN_ID,
+        {
+            'from': A.alice,
+            'value': Wei(alice_bid)
+        }
+    )
+    assert auction.bids(A.alice) == (Wei(alice_bid) + Wei(alice_bid))
+
+
 # 7.
 def test_cant_doubly_initialize(AuctionDeploy, AuctionFactoryDeploy, A):
     auction = AuctionDeploy
@@ -113,8 +186,7 @@ def test_cant_doubly_initialize(AuctionDeploy, AuctionFactoryDeploy, A):
         init_timestamp,
         init_address
     )
-    # AlreadyInitialized
-    with brownie.reverts("typed error: 0x0dc149f0"):
+    with brownie.reverts(AlreadyInitialized):
         auction.initialize(
             init_floor_price,
             init_timestamp,
@@ -134,8 +206,7 @@ def test_cant_initialize(AuctionDeploy, AuctionFactoryDeploy, A):
         init_timestamp,
         init_address
     )
-    # NotAdmin
-    with brownie.reverts("typed error: 0x7bfa4b9f"):
+    with brownie.reverts(NotAdmin):
         auction.initialize(
             init_floor_price,
             init_timestamp,
