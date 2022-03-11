@@ -1,6 +1,6 @@
 import pytest
 import time
-from brownie import Auction, AuctionFactory, accounts, chain, Wei
+from brownie import Auction, AuctionFactory, E721, accounts, chain, Wei
 import brownie
 
 # ✔️ 1. test can't bid if auction not started
@@ -8,23 +8,28 @@ import brownie
 # ✔️ 3. test can't bid after auction ended
 # ✔️ 4. test can bid during active auction
 # ✔️ 5. test correct bids for diffs
-# 6. test direct eth payments are rejected
+# ✔️ 6. test direct eth payments are rejected
 # ✔️ 7. test auction can't be initialized more than once
 # ✔️ 8. test auction can't be initialized by non-deployer
-# 9. test can't bid if do not hold whitelisted collection
+# ✔️ 9. test can't bid if do not hold whitelisted collection
 # 10. test can bid if I hold whitelisted collection
-# 11. test anyone can bid if whitelisted collection is zero
+# ✔️ 11. test anyone can bid if whitelisted collection is zero
+# (implicitly tested in the above tests)
+# 12. test withdraw of funds works
 
 # Consts
 
 ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 SENTINEL_TOKEN_ID = 0
+FUTURE_TIMESTAMP = int(time.time()) + 1_000_000
 
 # Errors
 
 AuctionNotActive = 'typed error: 0x69b8d0fe'
 AlreadyInitialized = 'typed error: 0x0dc149f0'
+BidForbidden = 'typed error: 0xff005159'
 NotAdmin = 'typed error: 0x7bfa4b9f'
+RejectDirectPayments = 'typed error: 0x3c7b40ba'
 
 # Tests Set Up
 
@@ -51,13 +56,17 @@ def AuctionDeploy(A):
 def AuctionFactoryDeploy(A):
     return AuctionFactory.deploy({'from': A.deployer})
 
+@pytest.fixture(scope="module")
+def E721Deploy(A):
+    return E721.deploy({'from': A.deployer})
+
 
 # Tests
 # 1.
 def test_cant_bid_before_start(AuctionDeploy, A):
     auction = AuctionDeploy
 
-    init_floor_price, init_timestamp, init_address = 1, 10, ZERO_ADDRESS
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, ZERO_ADDRESS
     auction.initialize(
         init_floor_price,
         init_timestamp,
@@ -79,7 +88,7 @@ def test_correct_clone_state(AuctionDeploy, AuctionFactoryDeploy, A):
     auction_factory = AuctionFactoryDeploy
 
     # we pretend that Alice is an NFT collection here
-    init_floor_price, init_timestamp, init_address = 1, 10, A.alice
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, A.alice
     auction_factory.setAuctionAddress(auction)
     auction.initialize(
         init_floor_price,
@@ -143,9 +152,7 @@ def test_cant_bid_after_end(AuctionDeploy, A):
 def test_cant_bid_after_end(AuctionDeploy, A):
     auction = AuctionDeploy
 
-    # auction end somewhere in the future
-    now = int(time.time()) + 1_000_000
-    init_floor_price, init_timestamp, init_address = 1, now, ZERO_ADDRESS
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, ZERO_ADDRESS
     auction.initialize(
         init_floor_price,
         init_timestamp,
@@ -173,13 +180,30 @@ def test_cant_bid_after_end(AuctionDeploy, A):
     assert auction.bids(A.alice) == (Wei(alice_bid) + Wei(alice_bid))
 
 
+# 6.
+def test_direct_payments_rejected(AuctionDeploy, A):
+    auction = AuctionDeploy
+
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, ZERO_ADDRESS
+    auction.initialize(
+        init_floor_price,
+        init_timestamp,
+        init_address
+    )
+    auction.startAuction()
+
+    alice_bid = f'{init_floor_price} ether'
+    with brownie.reverts(RejectDirectPayments):
+        A.alice.transfer(auction, alice_bid)
+
+
 # 7.
 def test_cant_doubly_initialize(AuctionDeploy, AuctionFactoryDeploy, A):
     auction = AuctionDeploy
     auction_factory = AuctionFactoryDeploy
 
     # we pretend that Alice is an NFT collection here
-    init_floor_price, init_timestamp, init_address = 1, 10, A.alice
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, A.alice
     auction_factory.setAuctionAddress(auction)
     auction.initialize(
         init_floor_price,
@@ -199,7 +223,7 @@ def test_cant_initialize(AuctionDeploy, AuctionFactoryDeploy, A):
     auction_factory = AuctionFactoryDeploy
 
     # we pretend that Alice is an NFT collection here
-    init_floor_price, init_timestamp, init_address = 1, 10, A.alice
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, A.alice
     auction_factory.setAuctionAddress(auction)
     auction.initialize(
         init_floor_price,
@@ -213,3 +237,58 @@ def test_cant_initialize(AuctionDeploy, AuctionFactoryDeploy, A):
             init_address,
             {'from': A.alice}
         )
+
+
+# 9.
+def test_no_whitelisted_nft(AuctionDeploy, E721Deploy, A):
+    auction = AuctionDeploy
+    e721 = E721Deploy
+
+    # mint first token to deployer
+    e721.mint()
+    minted_token_id = 1
+
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, e721
+    auction.initialize(
+        init_floor_price,
+        init_timestamp,
+        init_address
+    )
+    auction.startAuction()
+
+    with brownie.reverts(BidForbidden):
+        auction.placeBid(
+            minted_token_id,
+            {
+                'from': A.alice,
+                'value': f'{init_floor_price} ether'
+            }
+        )
+
+# 10.
+def test_holds_whitelisted_nft(AuctionDeploy, E721Deploy, A):
+    auction = AuctionDeploy
+    e721 = E721Deploy
+
+    # mint first token to deployer
+    e721.mint({'from': A.alice})
+    minted_token_id = 1
+
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, e721
+    auction.initialize(
+        init_floor_price,
+        init_timestamp,
+        init_address
+    )
+    auction.startAuction()
+
+    alice_bid = f'{init_floor_price} ether'
+    auction.placeBid(
+        minted_token_id,
+        {
+            'from': A.alice,
+            'value': alice_bid
+        }
+    )
+
+    assert auction.bids(A.alice) == alice_bid
