@@ -12,7 +12,7 @@ contract ClubMintPass is IClubMintPass, ERC721("RKL Club Mint Pass", "RKLCMP") {
     address[] public minters;
 
     bool private burnEnabled = false;
-    uint256 private tokenId = 1;
+    uint256 private tokenID = 1;
 
     /// Modifiers
 
@@ -30,8 +30,8 @@ contract ClubMintPass is IClubMintPass, ERC721("RKL Club Mint Pass", "RKLCMP") {
     /// @inheritdoc IClubMintPass
     function batchMint(address[] calldata to) external onlyOwner {
         for (uint256 i = 0; i < to.length; i++) {
-            _safeMint(to[i], tokenId);
-            tokenId += 1;
+            _safeMint(to[i], tokenID);
+            tokenID += 1;
         }
     }
 
@@ -47,7 +47,7 @@ contract ClubMintPass is IClubMintPass, ERC721("RKL Club Mint Pass", "RKLCMP") {
             revert NotOwner(tokenID_);
         }
         // burn the token and add the user to Club minters
-        _burn(tokenId);
+        _burn(tokenID_);
         // add the burner as qualified to mint the actual Club NFT
         minters.push(msg.sender);
     }
