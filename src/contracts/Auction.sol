@@ -11,8 +11,7 @@ contract Auction is IAuction {
 
     /// State variables
 
-    // todo: this must be deployer
-    address private constant ADMIN = 0x000000724350d0b24747bd816dC5031AcB7EFE0B;
+    address private immutable ADMIN;
     mapping(address => uint256) public bids;
 
     uint256 public constant MINIMUM_BID_INCREMENT = 0.1 ether;
@@ -29,6 +28,12 @@ contract Auction is IAuction {
     modifier onlyOwner() {
         if (msg.sender != ADMIN) revert NotAdmin();
         _;
+    }
+
+    /// Constructor
+
+    constructor() {
+        ADMIN = msg.sender;
     }
 
     /// Init
