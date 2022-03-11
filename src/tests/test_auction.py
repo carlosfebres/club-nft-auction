@@ -12,10 +12,11 @@ import brownie
 # ✔️ 7. test auction can't be initialized more than once
 # ✔️ 8. test auction can't be initialized by non-deployer
 # ✔️ 9. test can't bid if do not hold whitelisted collection
-# 10. test can bid if I hold whitelisted collection
+# ✔️ 10. test can bid if I hold whitelisted collection
 # ✔️ 11. test anyone can bid if whitelisted collection is zero
 # (implicitly tested in the above tests)
-# 12. test withdraw of funds works
+# ✔️ 12. test withdraw of funds works
+# ✔️ 13. test can't bid if diff less than minimum increment
 
 # Consts
 
@@ -30,6 +31,7 @@ AlreadyInitialized = 'typed error: 0x0dc149f0'
 BidForbidden = 'typed error: 0xff005159'
 NotAdmin = 'typed error: 0x7bfa4b9f'
 RejectDirectPayments = 'typed error: 0x3c7b40ba'
+LessThanMinIncrement = 'typed error: 0xf2148d68000000000000000000000000000000000000000000000000016345785d89ffff'
 
 # Tests Set Up
 
@@ -292,3 +294,63 @@ def test_holds_whitelisted_nft(AuctionDeploy, E721Deploy, A):
     )
 
     assert auction.bids(A.alice) == alice_bid
+
+# 12.
+def test_withdraw_works(AuctionDeploy, A):
+    auction = AuctionDeploy
+
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, ZERO_ADDRESS
+    auction.initialize(
+        init_floor_price,
+        init_timestamp,
+        init_address
+    )
+    auction.startAuction()
+
+    alice_bid = f'{init_floor_price} ether'
+    auction.placeBid(
+        SENTINEL_TOKEN_ID,
+        {
+            'from': A.alice,
+            'value': Wei(alice_bid)
+        }
+    )
+    
+    balance_before = A.deployer.balance()
+    auction.withdraw()
+    expected_balance_after = balance_before + Wei(alice_bid)
+    balance_after = A.deployer.balance()
+    assert expected_balance_after == balance_after
+
+
+# 13.
+def test_fail_if_less_than_min(AuctionDeploy, A):
+    auction = AuctionDeploy
+
+    init_floor_price, init_timestamp, init_address = 1, FUTURE_TIMESTAMP, ZERO_ADDRESS
+    auction.initialize(
+        init_floor_price,
+        init_timestamp,
+        init_address
+    )
+    auction.startAuction()
+
+    MINIMUM_BID_INCREMENT = auction.MINIMUM_BID_INCREMENT()
+    alice_bid = f'{init_floor_price} ether'
+    auction.placeBid(
+        SENTINEL_TOKEN_ID,
+        {
+            'from': A.alice,
+            'value': Wei(alice_bid)
+        }
+    )
+    # ! this error will be different if min increment is something
+    # ! other than 0.1 eth. You will need to change the error here
+    with brownie.reverts(LessThanMinIncrement):
+        auction.placeBid(
+            SENTINEL_TOKEN_ID,
+            {
+                'from': A.alice,
+                'value': MINIMUM_BID_INCREMENT - 1
+            }
+        )
