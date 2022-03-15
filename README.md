@@ -2,11 +2,15 @@
 
 Mainnet contract for Club NFT Auction
 
+## Notes
+
+You can find the transformer for the Club auction [here](https://github.com/rumble-kong-league/ethereum-indexer/tree/main/src/transformers/rkl_club_auction).
+
 ## TODOs
 
-- off-chain refund script
+- off-chain refund script & test it
 - transformer for ethereum-indexer to track the bidders
-- placholder nft mint pass
+- ✔️ placholder nft mint pass
 - test the contracts with FE on testnet
-- simple tests
-- script to distribute ClubMintPasses to winners
+- ✔️ simple tests
+- script to distribute ClubMintPasses to winners & test it
