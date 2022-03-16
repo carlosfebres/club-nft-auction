@@ -8,7 +8,7 @@ You can find the transformer for the Club auction [here](https://github.com/rumb
 
 ## TODOs
 
-- off-chain refund script & test it
+- ✔️ off-chain refund script & test it
 - ✔️ transformer for ethereum-indexer to track the bidders
 - ✔️ placholder nft mint pass
 - test the contracts with FE on testnet
