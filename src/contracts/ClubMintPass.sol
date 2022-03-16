@@ -10,6 +10,8 @@ contract ClubMintPass is IClubMintPass, ERC721("RKL Club Mint Pass", "RKLCMP") {
 
     address public immutable admin;
     address[] public minters;
+    /// @dev will give us the number of clubs the user can mint
+    mapping(address => uint256) public numClubs;
 
     bool private burnEnabled = false;
     uint256 private tokenID = 1;
@@ -50,6 +52,12 @@ contract ClubMintPass is IClubMintPass, ERC721("RKL Club Mint Pass", "RKLCMP") {
         _burn(tokenID_);
         // add the burner as qualified to mint the actual Club NFT
         minters.push(msg.sender);
+        // also keep track of how many clubs the address is allowed to mint
+        if (numClubs[msg.sender] > 0) {
+            numClubs[msg.sender] += 1;
+        } else {
+            numClubs[msg.sender] = 1;
+        }
     }
 
     /// Admin

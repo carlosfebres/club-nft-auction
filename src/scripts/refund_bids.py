@@ -73,8 +73,8 @@ def refund_bid(bid: Bid, from_account) -> None:
     # !!!!!!!! NOTICE THE SCALE: ETHER !!!!!!!!!!!!
     refund_amount = f'{refund_amount} ether'
     # 15% higher than the recommended priority fee
-    priority_fee = 1.15 * chain.priority_fee
-    print(f'Refunding {refund_amount}. Priority fee: {priority_fee}.')
+    priority_fee = int(1.15 * chain.priority_fee)
+    print(f'Refunding {refund_amount}. Priority fee: {priority_fee} wei.')
     from_account.transfer(bid.address, refund_amount, priority_fee=priority_fee)
 
 
@@ -88,8 +88,8 @@ def main():
     num_bids_to_refund = len(bids)
 
     for i, bid in enumerate(bids):
-        print(f'refunding bid #{i + 1}/{num_bids_to_refund}')
-        print(f'Bidder: {bid.address}, total_amount: {bid.total_amount}')
+        print(f'refunding bid #{i + 1}/{num_bids_to_refund}.')
+        print(f'bidder: {bid.address}, total_amount: {bid.total_amount} wei.')
         refund_bid(bid, refunder)
 
 
