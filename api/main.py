@@ -9,7 +9,6 @@ from aiohttp import web
 from tartiflette_aiohttp import register_graphql_handlers
 
 
-
 class Server:
 
     def __init__(
@@ -20,31 +19,24 @@ class Server:
     ) -> None:
 
         self.host = host
-        self.graphiql_debug = graphiql_debug
         self.port = port
+        self.graphiql_debug = graphiql_debug
 
-    def start(self) -> None:
-        """@inheritdoc IServer"""
+    def __call__(self) -> None:
 
         loop = asyncio.get_event_loop()
 
-        # Init aiohttp server
         app = web.Application()
 
         register_graphql_handlers(
             app,
-            engine_sdl=os.path.dirname(os.path.abspath(__file__))
-            + "/sdl",
-            # todo
-            # engine_modules=[
-            #     f"{self.to_serve}.query_resolvers",
-            # ],
+            engine_sdl=f"{os.path.dirname(os.path.abspath(__file__))}/sdl",
+            engine_modules="query_resolvers",
             executor_http_endpoint="/graphql",
-            executor_http_methods=["POST"],
+            executor_http_methods=["POST", "GET"],
             graphiql_enabled=self.graphiql_debug,
         )
 
-        # Bind aiohttp to asyncio
         web.run_app(app, host=self.host, port=self.port)
 
         return 0
@@ -60,7 +52,8 @@ def main():
         format="%(relativeCreated)6d %(process)d %(message)s",
     )
 
-    server = Server(port=8080, graphiql_debug=True)
+    server = Server(graphiql_debug=True)
+
     server()
 
 

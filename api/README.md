@@ -13,3 +13,7 @@ You will need to reach out to `hello@rl.games` if you would like to get an authe
 TODO: talk about how to make requests.
 
 TODO: graphql client to try out requests.
+
+## Dev
+
+1. Copy `.env.example` into `.env`
