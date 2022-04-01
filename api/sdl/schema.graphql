@@ -1,4 +1,73 @@
+scalar Color
+scalar Date
+scalar LogoImage
+
+# todo: auction related stuff
+
+type Kong {
+    id: ID!
+    name: String!
+    bio: String
+    defense: Int!
+    finish: Int!
+    shooting: Int!
+    vision: Int!
+    totalBoost: Int!
+}
+
+type Club {
+    id: ID!
+    name: String!
+    bio: String
+    establishedOn: Date!
+    # Depends on the Club's token id.
+    # Earlier token ids will have lower
+    # wave numbers. The domain is [1, 2, 3, ...]
+    wave: Int!
+    # Not optional, because will return default image
+    # if the owner hasn't set it herself
+    logoImage: LogoImage!
+    color1: Color
+    color2: Color
+    roster: [Kong!]
+    totalBoost: Int!
+}
+
+type RequestJoinClub {
+    # f"{club_id}::{kong_id}"
+    id: ID!
+    club: Club!
+    kong: Kong!
+}
 
 type Query {
+    # pong
     ping: String
+    kong(kongId: ID!): Kong
+    club(clubId: ID!): Club
+    requestJoinClub(id: ID!): RequestJoinClub
+    findClubWithKongId(kongId: ID!): Club
+}
+
+type Mutation {
+    # First two mutations are from the perspective of
+    # the kong holder. Next two, are from the perspective
+    # of the club owner.
+
+    # Only API token holders can call this.
+    # There is no validation if the request is from the
+    # owner. This responsibility is on the client.
+    # In case kong is already part of the club, a String
+    # return reason will notify you. Else: "success".
+    requestJoinClub(kongID: ID!, clubID: ID!): String!
+    leaveClub(kongID: ID!, clubID: ID!): String!
+
+    acceptRequestJoinClub(kongID: ID!, clubID: ID!): String!
+    rejectRequestJoinClub(kongID: ID!, clubID: ID!): String!
+
+    setClubName(name: String!, clubID: ID!): String!
+    setClubBio(bio: String!, clubID: ID!): String!
+    setClubLogoImage(image: Image!, clubID: ID!): String!
+    setClubColor1(color: Color!, clubID: ID!): String!
+    setClubColor2(color: Color!, clubID: ID!): String!
 }
