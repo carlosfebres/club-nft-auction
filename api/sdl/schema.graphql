@@ -5,6 +5,7 @@ scalar LogoImage
 # todo: auction related stuff
 
 type Kong {
+    # token id
     id: ID!
     name: String!
     bio: String
@@ -18,7 +19,9 @@ type Kong {
     club: String
 }
 
+# These are Mint Passes! Not the real NFTs
 type Club {
+    # token id
     id: ID!
     name: String!
     bio: String
@@ -48,8 +51,6 @@ type Query {
     ping: String
     kong(kongId: ID!): Kong
     club(clubId: ID!): Club
-    requestJoinClub(id: ID!): RequestJoinClub
-    findClubWithKongId(kongId: ID!): Club
 }
 
 type Mutation {
