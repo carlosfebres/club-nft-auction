@@ -1,9 +1,30 @@
 scalar Color
-scalar Date
+scalar Timestamp
 scalar KongImage
 scalar LogoImage
 
-# todo: auction related stuff
+type Bid {
+    # auction address, which is Auction's id
+    auction: String!
+    # bidder address
+    bidder: String!
+    amount: Int!
+    timestamp: Timestamp!
+}
+
+type AuctionParticipant {
+    # address of the bidder
+    id: ID!
+    auction: Auction!
+    bids: [Bid!]!
+}
+
+type Auction {
+    # address of the auction
+    id: ID!
+    startTimestamp: Timestamp!
+    endTimestamp: Timestamp!
+}
 
 # - taken from the db. base64 encoded, under 100kb
 # - name & bio taken from the events of the kong naming contract
@@ -22,8 +43,8 @@ type Kong {
     vision: Int!
     totalBoost: Int!
     # If this is not set, it means this kong is not part
-    # of any club
-    club: Club
+    # of any club. Otherwise, it's the id of the club
+    club: String
 }
 
 # These are Mint Passes! Not the real NFTs
@@ -32,7 +53,7 @@ type Club {
     id: ID!
     name: String!
     bio: String
-    establishedOn: Date!
+    establishedOn: Timestamp!
     # Depends on the Club's token id.
     # Earlier token ids will have lower
     # wave numbers. The domain is [1, 2, 3, ...]
@@ -42,13 +63,12 @@ type Club {
     logoImage: LogoImage!
     color1: Color
     color2: Color
-    roster: [Kong!]
+    # ids of the kongs
+    roster: [String!]
     totalBoost: Int!
 }
 
 type RequestJoinClub {
-    # f"{club_id}::{kong_id}"
-    id: ID!
     club: Club!
     kong: Kong!
 }
