@@ -1,12 +1,19 @@
 scalar Color
 scalar Date
+scalar KongImage
 scalar LogoImage
 
 # todo: auction related stuff
 
+# - taken from the db. base64 encoded, under 100kb
+# - name & bio taken from the events of the kong naming contract
+# - defense, finish, shooting, vision taken from json files meta
+# - totalBoost = defense + finish + shooting + vision
+# - club that the kong is a part of (might not be part of any)
 type Kong {
     # token id
     id: ID!
+    kongImage: KongImage!
     name: String!
     bio: String
     defense: Int!
@@ -16,7 +23,7 @@ type Kong {
     totalBoost: Int!
     # If this is not set, it means this kong is not part
     # of any club
-    club: String
+    club: Club
 }
 
 # These are Mint Passes! Not the real NFTs
