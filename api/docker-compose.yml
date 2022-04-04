@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  db:
+    image: mongo
+    ports:
+      - "27017:27017"
+    env_file:
+      - .env.mongo
+    networks:
+      - web
+
+  dev:
+    build: 
+      dockerfile: Dockerfile.dev
+    env_file:
+      - $PWD/.env
+    ports:
+      - "5000:5000"
+    volumes:
+      - $PWD:/app
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - web
+
+networks:
+  web:

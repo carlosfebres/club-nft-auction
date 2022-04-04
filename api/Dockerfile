@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1
+
+FROM python:3.9.12
+
+# https://stackoverflow.com/questions/53835198/integrating-python-poetry-with-docker
+ENV PYTHONFAULTHANDLER=1 \
+  PYTHONUNBUFFERED=1 \
+  PYTHONHASHSEED=random \
+  PIP_NO_CACHE_DIR=off \
+  PIP_DISABLE_PIP_VERSION_CHECK=on \
+  PIP_DEFAULT_TIMEOUT=100 \
+  POETRY_VERSION=1.0.0
+
+# System deps:
+RUN pip install "poetry==1.1.6"
+
+WORKDIR /app
+COPY poetry.lock pyproject.toml /app/
+
+# Project initialization:
+RUN poetry config virtualenvs.create false \
+  && poetry install --no-dev --no-interaction --no-ansi
+
+CMD ["python", "main.py"]
