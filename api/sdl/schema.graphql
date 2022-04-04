@@ -105,7 +105,7 @@ type Mutation {
 
     setClubName(name: String!, clubID: ID!): String!
     setClubBio(bio: String!, clubID: ID!): String!
-    setClubLogoImage(image: Image!, clubID: ID!): String!
+    setClubLogoImage(image: LogoImage!, clubID: ID!): String!
     setClubColor1(color: Color!, clubID: ID!): String!
     setClubColor2(color: Color!, clubID: ID!): String!
 }

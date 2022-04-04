@@ -103,6 +103,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.mongo
 .venv
 env/
 venv/

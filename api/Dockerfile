@@ -12,7 +12,7 @@ ENV PYTHONFAULTHANDLER=1 \
   POETRY_VERSION=1.0.0
 
 # System deps:
-RUN pip install "poetry==1.1.6"
+RUN pip install poetry==1.1.6
 
 WORKDIR /app
 COPY poetry.lock pyproject.toml /app/
@@ -20,5 +20,9 @@ COPY poetry.lock pyproject.toml /app/
 # Project initialization:
 RUN poetry config virtualenvs.create false \
   && poetry install --no-dev --no-interaction --no-ansi
+
+COPY . /app
+
+RUN poetry shell
 
 CMD ["python", "main.py"]

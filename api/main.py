@@ -3,10 +3,12 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Union
 
 from aiohttp import web
 from tartiflette_aiohttp import register_graphql_handlers
+
+import sdl.scalars
 
 
 class Server:
